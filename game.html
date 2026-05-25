@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌙 Gardens of Noor — Multiplayer Board Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF6E8; --gold:#F5C842; --gold2:#E6A800; --gold-glow:rgba(245,200,66,.45);
+  --teal:#4ECDC4; --teal2:#2AB5AB; --sage:#7BC47A; --sage2:#5AA35A;
+  --rose:#FF8FA3; --ink:#2C2416; --mid:#6B5B45; --sh:rgba(44,36,22,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;min-height:100%;overflow-x:hidden;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;}
+
+/* ══════════════════════════════════════
+   SETUP SCREEN
+══════════════════════════════════════ */
+#setupScreen{
+  position:fixed;inset:0;z-index:400;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#1A1A3E 0%,#2D2D6B 40%,#4A3080 70%,#7B4F9E 100%);
+  padding:16px;
+  overflow-y:auto;
+}
+.setup-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.sstar{position:absolute;border-radius:50%;background:white;animation:stw var(--d,3s) ease-in-out infinite;animation-delay:var(--dl,0s);}
+@keyframes stw{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+.setup-card{
+  background:white;border-radius:28px;
+  padding:28px 24px 24px;
+  width:min(480px,100%);
+  text-align:center;
+  box-shadow:0 20px 80px rgba(0,0,0,.4);
+  position:relative;z-index:2;
+  animation:scardIn .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes scardIn{0%{transform:scale(.8) translateY(30px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+
+.setup-moon{font-size:3.5rem;display:block;margin-bottom:6px;animation:smoon 3s ease-in-out infinite;}
+@keyframes smoon{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-8px) rotate(5deg)}}
+.setup-title{font-family:'Bubblegum Sans',cursive;font-size:clamp(1.6rem,5vw,2.2rem);color:var(--ink);line-height:1.1;}
+.setup-title span{color:var(--gold2);}
+.setup-sub{font-size:.8rem;color:var(--mid);font-weight:700;margin:4px 0 20px;letter-spacing:.5px;}
+
+.setup-section{margin-bottom:18px;text-align:left;}
+.setup-label{
+  font-family:'Bubblegum Sans',cursive;font-size:1rem;color:var(--ink);
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+
+/* Human count selector */
+.count-row{display:flex;gap:8px;justify-content:center;}
+.count-btn{
+  flex:1;max-width:80px;
+  aspect-ratio:1/1;
+  border:3px solid rgba(0,0,0,.1);
+  border-radius:16px;
+  background:var(--bg);
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;
+  color:var(--ink);
+  transition:all .2s;
+  position:relative;
+}
+.count-btn:hover{transform:scale(1.06);border-color:var(--gold);}
+.count-btn.sel{
+  border-color:var(--gold2);
+  background:linear-gradient(135deg,#FFF8D0,#FFE878);
+  box-shadow:0 0 0 3px var(--gold-glow),0 4px 14px rgba(0,0,0,.1);
+  transform:scale(1.06);
+}
+.count-btn .cb-num{font-size:1.8rem;line-height:1;}
+.count-btn .cb-lbl{font-size:.62rem;font-weight:800;color:var(--mid);}
+.count-btn.sel .cb-lbl{color:var(--gold2);}
+
+/* Name inputs for human players */
+.name-inputs{display:flex;flex-direction:column;gap:8px;}
+.name-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);border-radius:14px;padding:8px 12px;
+  border:2px solid rgba(245,200,66,.3);
+  transition:border-color .2s;
+}
+.name-row:focus-within{border-color:var(--gold);}
+.name-avatar{font-size:1.4rem;line-height:1;}
+.name-label{font-size:.78rem;font-weight:800;color:var(--mid);white-space:nowrap;}
+.name-in{
+  flex:1;border:none;outline:none;background:transparent;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;
+  color:var(--ink);min-width:0;
+}
+.name-in::placeholder{color:#CCC;}
+
+/* Avatar picker */
+.avatar-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.av-btn{
+  font-size:1.6rem;border:3px solid transparent;border-radius:12px;
+  padding:4px 6px;cursor:pointer;transition:all .2s;background:var(--bg);
+  line-height:1;
+}
+.av-btn:hover{transform:scale(1.15);}
+.av-btn.sel{border-color:var(--gold);background:rgba(245,200,66,.15);transform:scale(1.15);}
+
+/* Player preview panel */
+.preview-panel{
+  background:var(--bg);border-radius:16px;padding:12px;
+  border:2px solid rgba(245,200,66,.25);margin-bottom:16px;
+}
+.preview-title{font-size:.75rem;font-weight:900;color:var(--mid);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.preview-list{display:flex;flex-direction:column;gap:5px;}
+.pv-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:.8rem;font-weight:700;
+  padding:5px 8px;border-radius:10px;
+  background:white;
+}
+.pv-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.pv-type{margin-left:auto;font-size:.65rem;color:var(--mid);}
+
+.start-btn{
+  width:100%;border:none;border-radius:50px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem;
+  color:var(--ink);padding:14px;cursor:pointer;
+  box-shadow:0 6px 24px rgba(245,200,66,.5);
+  transition:transform .15s,filter .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.start-btn:hover{transform:translateY(-2px);filter:brightness(1.05);}
+.start-btn:active{transform:scale(.97);}
+
+/* ══════════════════════════════════════
+   GAME LAYOUT
+══════════════════════════════════════ */
+#gameScreen{display:none;}
+.wrap{max-width:1100px;margin:0 auto;padding:8px 6px 30px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.hdr{text-align:center;padding:10px 0 0;}
+.hdr-title{font-family:'Bubblegum Sans',cursive;font-size:clamp(1.4rem,4vw,2.2rem);color:var(--ink);}
+.hdr-title span{color:var(--gold2);}
+.hdr-sub{font-size:.76rem;color:var(--mid);font-weight:700;letter-spacing:.7px;margin-top:2px;}
+.hdr-sub button{
+  background:none;border:2px solid rgba(245,200,66,.4);border-radius:20px;
+  font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:800;
+  color:var(--gold2);padding:2px 10px;cursor:pointer;margin-left:8px;
+  transition:all .2s;
+}
+.hdr-sub button:hover{background:rgba(245,200,66,.15);}
+
+/* ── PLAYER PANELS ── */
+.players-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%;}
+.player-card{
+  flex:1;min-width:120px;max-width:190px;
+  background:white;border-radius:16px;
+  padding:10px 10px 8px;
+  box-shadow:0 3px 12px var(--sh);
+  border:3px solid transparent;
+  transition:all .3s;position:relative;opacity:.72;
+}
+.player-card.active{
+  opacity:1;border-color:var(--color,var(--gold));
+  box-shadow:0 0 0 2px var(--color,var(--gold)),0 4px 20px rgba(0,0,0,.12);
+  transform:translateY(-2px);
+}
+.player-card.finished{opacity:.6;background:linear-gradient(135deg,#F0FFF4,#E0F4E0);border-color:#80C880!important;}
+.pc-top{display:flex;align-items:center;gap:8px;}
+.pc-avatar{font-size:1.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+.pc-info{flex:1;min-width:0;}
+.pc-name{font-weight:900;font-size:.8rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-type{font-size:.62rem;color:var(--mid);font-weight:700;}
+.pc-pos{font-size:.68rem;color:var(--mid);margin-top:2px;font-weight:700;}
+.pc-noor{display:flex;align-items:center;gap:4px;margin-top:5px;font-size:.7rem;font-weight:800;color:var(--gold2);}
+.pc-bar{flex:1;height:6px;background:rgba(0,0,0,.08);border-radius:6px;overflow:hidden;}
+.pc-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--color,var(--gold)),#FFD700);transition:width .4s;}
+.pc-badge{position:absolute;top:5px;right:7px;font-size:.62rem;font-weight:900;border-radius:20px;padding:2px 6px;}
+.badge-active{background:var(--color,var(--gold));color:white;}
+.badge-finished{background:#5AA35A;color:white;}
+.badge-waiting{background:#DDD;color:#888;}
+
+/* ── MAIN GAME AREA ── */
+.game-area{display:flex;gap:12px;width:100%;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+
+/* ── BOARD ── */
+.board{
+  display:grid;grid-template-columns:repeat(9,1fr);
+  gap:3px;background:rgba(255,255,255,.75);
+  border-radius:20px;padding:7px;
+  box-shadow:0 8px 32px var(--sh),0 0 0 3px rgba(245,200,66,.25);
+  width:min(530px,99vw);flex-shrink:0;
+}
+.tile{
+  aspect-ratio:1/1;border-radius:9px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;background:white;border:2px solid rgba(0,0,0,.06);
+  overflow:hidden;transition:box-shadow .2s,transform .15s;
+}
+.tile-num{position:absolute;top:2px;left:3px;font-size:clamp(.35rem,.55vw,.52rem);font-weight:800;color:rgba(0,0,0,.22);line-height:1;}
+.tile-emoji{font-size:clamp(.8rem,1.4vw,1.35rem);line-height:1;position:relative;z-index:1;}
+.tile-label{font-size:clamp(.3rem,.45vw,.42rem);font-weight:700;color:rgba(0,0,0,.34);text-align:center;line-height:1.1;margin-top:1px;padding:0 1px;}
+.token-stack{position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;z-index:10;pointer-events:none;}
+.token{font-size:clamp(.65rem,1.1vw,1rem);line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));animation:tbob .9s ease-in-out infinite;}
+@keyframes tbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.token.active-tok{animation:tbob .4s ease-in-out infinite,tglow .6s ease-in-out infinite;}
+@keyframes tglow{0%,100%{filter:drop-shadow(0 0 3px gold)}50%{filter:drop-shadow(0 0 8px gold)}}
+
+.t-start  {background:linear-gradient(135deg,#FFE89A,#F5C842);border-color:#E6A800;}
+.t-end    {background:linear-gradient(135deg,#FFD700,#FFA500);border-color:#E08000;box-shadow:0 0 12px rgba(255,165,0,.5)!important;}
+.t-garden {background:linear-gradient(135deg,#E8F8E8,#C8ECC8);border-color:#A8D8A8;}
+.t-lantern{background:linear-gradient(135deg,#FFF8D0,#FFE878);border-color:#F0C840;}
+.t-river  {background:linear-gradient(135deg,#D8F0FF,#B0DAFF);border-color:#88C0F0;}
+.t-village{background:linear-gradient(135deg,#FFE8D8,#FFD0B8);border-color:#F0A880;}
+.t-library{background:linear-gradient(135deg,#F0E8FF,#DDD0FF);border-color:#B898E8;}
+.t-good   {background:linear-gradient(135deg,#D0FFD8,#A0F0B0);border-color:#60C870;animation:epulse 2.5s ease-in-out infinite;}
+.t-back   {background:linear-gradient(135deg,#FFF0E8,#FFD8C8);border-color:#F0A898;}
+.t-event  {background:linear-gradient(135deg,#FFF0D0,#FFE0A0);border-color:#F0C050;animation:epulse 2.5s ease-in-out infinite;}
+@keyframes epulse{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.3)}50%{box-shadow:0 0 0 5px rgba(245,200,66,0)}}
+.tile.highlight{box-shadow:0 0 0 3px var(--gold),0 0 14px var(--gold-glow)!important;transform:scale(1.06);z-index:5;}
+.jump-badge{position:absolute;top:2px;right:2px;font-size:.5rem;background:#5AA35A;color:white;border-radius:4px;padding:1px 3px;font-weight:900;z-index:3;}
+.back-badge{position:absolute;top:2px;right:2px;font-size:.5rem;background:#E08060;color:white;border-radius:4px;padding:1px 3px;font-weight:900;z-index:3;}
+
+/* ── SIDE ── */
+.side{flex:0 0 210px;display:flex;flex-direction:column;gap:8px;min-width:170px;}
+@media(max-width:680px){.side{flex:0 0 100%;flex-direction:row;flex-wrap:wrap;justify-content:center;}}
+.panel{background:white;border-radius:16px;padding:12px;box-shadow:0 4px 16px var(--sh);border:2px solid rgba(245,200,66,.2);}
+.panel-title{font-family:'Bubblegum Sans',cursive;font-size:.92rem;color:var(--ink);margin-bottom:8px;}
+.cat-emoji{font-size:2.6rem;display:block;text-align:center;animation:catbob 2s ease-in-out infinite;filter:drop-shadow(0 3px 5px rgba(0,0,0,.15));}
+@keyframes catbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.cat-msg{font-size:.73rem;font-weight:700;color:var(--mid);margin-top:6px;text-align:center;line-height:1.4;min-height:30px;}
+.dice-face{font-size:3rem;display:block;text-align:center;cursor:pointer;transition:transform .1s;user-select:none;filter:drop-shadow(0 3px 8px rgba(0,0,0,.2));}
+.dice-face:active{transform:scale(.85) rotate(20deg)!important;}
+.dice-face.rolling{animation:droll .45s ease-in-out;}
+@keyframes droll{0%{transform:rotate(0) scale(1)}25%{transform:rotate(90deg) scale(1.2)}75%{transform:rotate(270deg) scale(.9)}100%{transform:rotate(360deg) scale(1)}}
+.roll-btn{width:100%;border:none;border-radius:50px;background:linear-gradient(135deg,var(--gold),var(--gold2));font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;color:var(--ink);padding:11px;cursor:pointer;margin-top:8px;box-shadow:0 5px 18px rgba(245,200,66,.4);transition:transform .15s,opacity .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.roll-btn:active{transform:scale(.95);}
+.roll-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+.dice-result{font-size:.73rem;font-weight:800;color:var(--mid);text-align:center;margin-top:6px;min-height:16px;}
+.turn-indicator{background:linear-gradient(135deg,var(--active-color,var(--gold)),var(--active-color2,var(--gold2)));border-radius:12px;padding:8px 10px;text-align:center;font-weight:900;font-size:.83rem;color:white;box-shadow:0 3px 12px rgba(0,0,0,.15);transition:all .4s;}
+.turn-indicator .turn-avatar{font-size:1.5rem;display:block;margin-bottom:2px;}
+.rank-list{display:flex;flex-direction:column;gap:4px;}
+.rank-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:9px;background:var(--bg);font-size:.72rem;font-weight:700;color:var(--ink);transition:background .3s;}
+.rank-item.r-finished{background:linear-gradient(90deg,#E8FFE8,#F0FFF0);color:var(--sage2);}
+.rank-item.r-active{background:linear-gradient(90deg,rgba(245,200,66,.15),transparent);}
+.rank-medal{font-size:.95rem;width:18px;text-align:center;}
+.rank-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-score{color:var(--gold2);font-weight:900;}
+.log-list{list-style:none;display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto;}
+.log-list li{font-size:.66rem;font-weight:700;color:var(--mid);padding:3px 6px;background:var(--bg);border-radius:6px;line-height:1.3;}
+.log-list li.good{color:var(--sage2);background:#F0FFF0;}
+.log-list li.back{color:#C06030;background:#FFF4EE;}
+.log-list li.win{color:#D4950A;background:#FFFBE8;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:.65rem;font-weight:700;color:var(--mid);margin-bottom:3px;}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;z-index:200;padding:12px;animation:mfade .25s ease;}
+@keyframes mfade{0%{opacity:0}100%{opacity:1}}
+.modal{background:white;border-radius:24px;padding:22px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 16px 60px rgba(0,0,0,.3);animation:mpop .38s cubic-bezier(.34,1.56,.64,1);position:relative;max-height:90vh;overflow-y:auto;}
+@keyframes mpop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.modal-icon{font-size:3.2rem;margin-bottom:6px;display:block;}
+.modal-title{font-family:'Bubblegum Sans',cursive;font-size:1.4rem;color:var(--ink);margin-bottom:5px;}
+.modal-who{font-size:.8rem;font-weight:800;margin-bottom:8px;padding:4px 12px;border-radius:20px;display:inline-block;}
+.modal-txt{font-size:.83rem;color:var(--mid);line-height:1.6;margin-bottom:12px;font-weight:600;}
+.modal-choices{display:flex;flex-direction:column;gap:7px;}
+.mchoice{border:2.5px solid;border-radius:13px;padding:10px 12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:.81rem;background:white;transition:all .18s;text-align:left;display:flex;align-items:center;gap:7px;}
+.mchoice:active{transform:scale(.97);}
+.mchoice.good{border-color:var(--sage);color:var(--sage2);}
+.mchoice.good:hover{background:#F0FFF4;}
+.mchoice.self{border-color:var(--gold);color:var(--gold2);}
+.mchoice.self:hover{background:rgba(245,200,66,.1);}
+.mchoice.ok{border-color:var(--teal);color:var(--teal2);}
+.mchoice.ok:hover{background:rgba(78,205,196,.1);}
+.reward-chips{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;}
+.rchip{background:var(--bg);border:2px solid rgba(245,200,66,.4);border-radius:50px;padding:3px 10px;font-weight:800;font-size:.73rem;color:var(--ink);}
+.final-rank-list{width:100%;margin-bottom:12px;}
+.final-rank-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;margin-bottom:5px;background:var(--bg);font-weight:800;}
+.fr-medal{font-size:1.4rem;width:28px;text-align:center;}
+.fr-avatar{font-size:1.3rem;}
+.fr-info{flex:1;text-align:left;}
+.fr-name{font-size:.85rem;color:var(--ink);}
+.fr-stats{font-size:.66rem;color:var(--mid);font-weight:700;}
+.fr-noor{font-size:.78rem;color:var(--gold2);font-weight:900;margin-left:auto;}
+
+/* ── TOAST / SPARKLE ── */
+.toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.97);border:2px solid rgba(245,200,66,.5);border-radius:50px;padding:7px 18px;font-weight:800;font-size:.8rem;color:var(--ink);box-shadow:0 4px 20px var(--sh);z-index:300;white-space:nowrap;animation:toastIn 3s ease forwards;pointer-events:none;}
+@keyframes toastIn{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}10%{opacity:1;transform:translateX(-50%) translateY(0)}78%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+.sparkle{position:fixed;pointer-events:none;z-index:250;font-size:1.3rem;animation:spk .7s ease-out forwards;}
+@keyframes spk{0%{transform:scale(0)rotate(0);opacity:1}60%{transform:scale(1.6)rotate(200deg);opacity:1}100%{transform:scale(0)rotate(400deg)translateY(-60px);opacity:0}}
+.finish-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#FFE89A,#F5C842);border-radius:24px;padding:18px 28px;text-align:center;box-shadow:0 12px 50px rgba(0,0,0,.25);z-index:190;animation:bannerPop .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+@keyframes bannerPop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.fb-icon{font-size:2.8rem;display:block;}
+.fb-text{font-family:'Bubblegum Sans',cursive;font-size:1.4rem;color:var(--ink);}
+.fb-sub{font-size:.82rem;color:var(--mid);font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SETUP SCREEN
+══════════════════════════════════════ -->
+<div id="setupScreen">
+  <div class="setup-stars" id="setupStars"></div>
+  <div class="setup-card">
+    <span class="setup-moon">🌙</span>
+    <div class="setup-title"><span>Gardens of Noor</span></div>
+    <div class="setup-sub">Board Game · Kindness · Honesty · Light</div>
+
+    <!-- STEP 1: How many humans? -->
+    <div class="setup-section">
+      <div class="setup-label">👥 How many human players?</div>
+      <div class="count-row" id="countRow">
+        <button class="count-btn sel" data-n="1" onclick="selectCount(1)">
+          <span class="cb-num">1</span><span class="cb-lbl">Just Me</span>
+        </button>
+        <button class="count-btn" data-n="2" onclick="selectCount(2)">
+          <span class="cb-num">2</span><span class="cb-lbl">2 Players</span>
+        </button>
+        <button class="count-btn" data-n="3" onclick="selectCount(3)">
+          <span class="cb-num">3</span><span class="cb-lbl">3 Players</span>
+        </button>
+        <button class="count-btn" data-n="4" onclick="selectCount(4)">
+          <span class="cb-num">4</span><span class="cb-lbl">4 Players</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Name + Avatar for each human -->
+    <div class="setup-section">
+      <div class="setup-label">✏️ Name your players</div>
+      <div class="name-inputs" id="nameInputs"></div>
+    </div>
+
+    <!-- STEP 3: Live preview of all 4 slots -->
+    <div class="preview-panel">
+      <div class="preview-title">📋 Game Lineup</div>
+      <div class="preview-list" id="previewList"></div>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">🌙 Start Journey!</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     GAME SCREEN
+══════════════════════════════════════ -->
+<div id="gameScreen">
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-title">🌙 <span>Gardens of Noor</span> 🌸</div>
+    <div class="hdr-sub" id="hdrSub">
+      Roll · Choose Kindness · Reach the Light
+      <button onclick="backToSetup()">⚙️ New Game</button>
+    </div>
+  </div>
+
+  <div class="players-row" id="playersRow"></div>
+
+  <div class="game-area">
+    <div class="board" id="board"></div>
+    <div class="side">
+      <div class="turn-indicator" id="turnIndicator">
+        <span class="turn-avatar" id="turnAvatar">🎲</span>
+        <span id="turnName">Loading…</span>
+      </div>
+      <div class="panel">
+        <span class="cat-emoji">🐱</span>
+        <div class="cat-msg" id="catMsg">Welcome! Let's begin! 🌟</div>
+      </div>
+      <div class="panel">
+        <span class="dice-face" id="diceEmoji" onclick="humanRoll()">🎲</span>
+        <button class="roll-btn" id="rollBtn" onclick="humanRoll()">🎲 Roll Dice!</button>
+        <div class="dice-result" id="diceResult">Your turn — roll!</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">🏆 Rankings</div>
+        <div class="rank-list" id="rankList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">📜 Journey Log</div>
+        <ul class="log-list" id="logList"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-title">🗺️ Guide</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#A0F0B0;border:2px solid #60C870"></div>⬆ Jump forward</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#FFD8C8;border:2px solid #F0A898"></div>⬇ Gentle setback</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#FFE0A0;border:2px solid #F0C050"></div>❓ Choice event</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#C8ECC8;border:2px solid #A8D8A8"></div>🌸 Garden</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#FFE878;border:2px solid #F0C840"></div>🪔 Lantern</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="modalBg" style="display:none">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════ */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let _ac = null;
+function getAC(){ if(!_ac){try{_ac=new AudioCtx();}catch(e){}} return _ac; }
+function tone(f,t='sine',d=.3,v=.12,delay=0){
+  const a=getAC();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);
+  o.type=t;o.frequency.value=f;
+  const s=a.currentTime+delay;
+  g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.02);
+  g.gain.exponentialRampToValueAtTime(.001,s+d);
+  o.start(s);o.stop(s+d+.05);
+}
+const snd={
+  click: ()=>tone(700,'sine',.08,.08),
+  dice:  ()=>[180,240,200,260,220].forEach((f,i)=>tone(f,'square',.06,.06,i*.04)),
+  move:  ()=>tone(400+Math.random()*80,'sine',.1,.07),
+  good:  ()=>[523,659,784,1047].forEach((f,i)=>tone(f,'sine',.35,.12,i*.1)),
+  back:  ()=>{tone(300,'sawtooth',.25,.08);setTimeout(()=>tone(250,'sawtooth',.2,.07),120);},
+  event: ()=>[440,550,660].forEach((f,i)=>tone(f,'sine',.3,.1,i*.08)),
+  win:   ()=>[523,659,784,1047,1319,1568].forEach((f,i)=>tone(f,'sine',.55,.14,i*.12)),
+  finish:()=>[784,1047,784,1047,1568].forEach((f,i)=>tone(f,'sine',.4,.13,i*.1)),
+  select:()=>[440,550].forEach((f,i)=>tone(f,'sine',.2,.1,i*.08)),
+};
+document.addEventListener('click',()=>getAC(),{once:true,passive:true});
+
+/* ═══════════════════════════════════════════════════
+   BOARD DEFINITION — 50 tiles
+═══════════════════════════════════════════════════ */
+const TILES=[
+  {type:'start',  emoji:'🏠',label:'Home',     sp:null},
+  {type:'garden', emoji:'🌸',label:'Garden',   sp:null},
+  {type:'lantern',emoji:'🪔',label:'Lantern',  sp:null},
+  {type:'event',  emoji:'📚',label:'Books!',   sp:{event:'books'}},
+  {type:'river',  emoji:'💧',label:'River',    sp:null},
+  {type:'good',   emoji:'⬆️',label:'+4',       sp:{jump:10}},
+  {type:'garden', emoji:'🌺',label:'Garden',   sp:null},
+  {type:'village',emoji:'🏡',label:'Village',  sp:null},
+  {type:'library',emoji:'📖',label:'Library',  sp:null},
+  {type:'lantern',emoji:'🪔',label:'Lantern',  sp:null},
+  {type:'event',  emoji:'💎',label:'Crystal!', sp:{event:'crystal'}},
+  {type:'garden', emoji:'🌻',label:'Garden',   sp:null},
+  {type:'back',   emoji:'😴',label:'-2',       sp:{back:2}},
+  {type:'river',  emoji:'🐟',label:'River',    sp:null},
+  {type:'good',   emoji:'⬆️',label:'+5',       sp:{jump:20}},
+  {type:'village',emoji:'🏘',label:'Village',  sp:null},
+  {type:'event',  emoji:'👴',label:'Elder!',   sp:{event:'elder'}},
+  {type:'garden', emoji:'🌷',label:'Garden',   sp:null},
+  {type:'lantern',emoji:'🌟',label:'Lantern',  sp:null},
+  {type:'library',emoji:'📚',label:'Library',  sp:null},
+  {type:'back',   emoji:'😤',label:'-3',       sp:{back:3}},
+  {type:'garden', emoji:'🌸',label:'Garden',   sp:null},
+  {type:'event',  emoji:'🍎',label:'Share!',   sp:{event:'share'}},
+  {type:'river',  emoji:'💧',label:'River',    sp:null},
+  {type:'lantern',emoji:'🪔',label:'Midpoint!',sp:null},
+  {type:'good',   emoji:'⬆️',label:'+4',       sp:{jump:30}},
+  {type:'village',emoji:'🏡',label:'Village',  sp:null},
+  {type:'garden', emoji:'🌺',label:'Garden',   sp:null},
+  {type:'event',  emoji:'🌧️',label:'Rain!',   sp:{event:'rain'}},
+  {type:'library',emoji:'📖',label:'Library',  sp:null},
+  {type:'back',   emoji:'💤',label:'-2',       sp:{back:2}},
+  {type:'lantern',emoji:'🪔',label:'Lantern',  sp:null},
+  {type:'garden', emoji:'🌻',label:'Garden',   sp:null},
+  {type:'event',  emoji:'👶',label:'Baby!',    sp:{event:'baby'}},
+  {type:'good',   emoji:'⬆️',label:'+5',       sp:{jump:40}},
+  {type:'river',  emoji:'🐠',label:'River',    sp:null},
+  {type:'village',emoji:'🏘',label:'Village',  sp:null},
+  {type:'back',   emoji:'😡',label:'-4',       sp:{back:4}},
+  {type:'garden', emoji:'🌷',label:'Garden',   sp:null},
+  {type:'lantern',emoji:'🌟',label:'Lantern',  sp:null},
+  {type:'event',  emoji:'🌟',label:'Star!',    sp:{event:'star'}},
+  {type:'library',emoji:'📚',label:'Library',  sp:null},
+  {type:'garden', emoji:'🌸',label:'Garden',   sp:null},
+  {type:'back',   emoji:'😴',label:'-2',       sp:{back:2}},
+  {type:'good',   emoji:'⬆️',label:'+4',       sp:{jump:49}},
+  {type:'village',emoji:'🏡',label:'Village',  sp:null},
+  {type:'lantern',emoji:'🪔',label:'Lantern',  sp:null},
+  {type:'river',  emoji:'💧',label:'River',    sp:null},
+  {type:'garden', emoji:'🌺',label:'Almost!',  sp:null},
+  {type:'end',    emoji:'🌙',label:'Garden of Light!',sp:null},
+];
+
+/* ═══════════════════════════════════════════════════
+   EVENTS
+═══════════════════════════════════════════════════ */
+const EVENTS={
+  books:{icon:'📚',title:'Books Dropped!',story:'Little Yusuf dropped all his books! He looks worried...',choices:[
+    {lbl:'💚 Help Yusuf pick up books!',cls:'good',r:{noor:15,seeds:2},jump:3,catMsg:'MashAllah! Helping others is beautiful! 🌟',res:'Helped Yusuf! Garden bloomed! +3 tiles 🌸'},
+    {lbl:'🏃 Keep walking...',cls:'self',r:{noor:1,seeds:0},jump:0,back:1,catMsg:'Next time we can do better! 💛',res:'Yusuf looked sad. Small setback -1 tile'},
+  ]},
+  crystal:{icon:'💎',title:'Glowing Crystal!',story:'A crystal glows on the path! But a friend needs help...',choices:[
+    {lbl:'💚 Help friend first!',cls:'good',r:{noor:12,seeds:3},jump:4,catMsg:'Helping first = double blessing! 💚',res:'Friend grateful! Found bigger crystal! +4 tiles 💎'},
+    {lbl:'💎 Take crystal now!',cls:'self',r:{noor:3,seeds:0},jump:0,catMsg:'Bigger rewards come from kindness! 😺',res:'Crystal collected! +3 Noor only'},
+  ]},
+  elder:{icon:'👴',title:'Grandpa Needs Help!',story:'An elderly man dropped his walking stick and cannot reach it.',choices:[
+    {lbl:'💚 Run and pick it up!',cls:'good',r:{noor:18,seeds:2},jump:4,catMsg:'Respecting elders is SO important! 🌟',res:'Grandpa blessed you! Huge Noor! +4 tiles 👴💚'},
+    {lbl:'🤷 Someone else will help...',cls:'self',r:{noor:0,seeds:0},jump:0,back:2,catMsg:'Every small act matters! 💛',res:'Grandpa waited long... -2 tiles'},
+  ]},
+  share:{icon:'🍎',title:'Sharing is Caring!',story:'You have an apple. Your friend forgot their snack and is hungry.',choices:[
+    {lbl:'💚 Share half with friend!',cls:'good',r:{noor:14,seeds:4},jump:3,catMsg:'Sharing is a beautiful sunnah! 😻',res:'Friend so happy! Sharing sweeter! +3 tiles 🍎'},
+    {lbl:'😋 Eat it myself...',cls:'self',r:{noor:2,seeds:0},jump:0,catMsg:'Next chance try sharing — it feels wonderful! 🌱',res:'Friend still hungry. +2 Noor only'},
+  ]},
+  rain:{icon:'🌧️',title:'Rainy Day!',story:"It's raining! A girl forgot her umbrella. You have a big one!",choices:[
+    {lbl:'☂️ Share my umbrella!',cls:'good',r:{noor:16,seeds:2},jump:4,catMsg:'Walking together in rain is cozy! 🌧️💚',res:'Both stayed dry! Laughed together! +4 tiles ☂️'},
+    {lbl:'🏃 Rush home alone',cls:'self',r:{noor:1,seeds:0},jump:0,back:1,catMsg:'Remember that girl next rainy day! 💛',res:'Girl got soaked... -1 tile'},
+  ]},
+  baby:{icon:'👶',title:'Tired Mama!',story:'A tired mother struggles with a crying baby and heavy bags.',choices:[
+    {lbl:'💚 Carry her bags!',cls:'good',r:{noor:20,seeds:3},jump:5,catMsg:'PURRRR! That was the KINDEST thing! 😻',res:"Mama's face lit up with relief! +5 tiles 👶💚"},
+    {lbl:'💭 She seems okay...',cls:'self',r:{noor:0,seeds:0},jump:0,back:2,catMsg:'Mamas work SO hard! 💛',res:"She wasn't okay... -2 tiles"},
+  ]},
+  star:{icon:'🌟',title:'Honesty Test!',story:'You accidentally broke a vase yesterday. Do you tell the truth?',choices:[
+    {lbl:"✅ I'll tell the truth!",cls:'good',r:{noor:22,seeds:3},jump:4,badge:true,catMsg:'Honesty is the BEST light! ✨',res:'Everyone appreciated your honesty! +4 tiles + BADGE 🌟'},
+    {lbl:'😬 Hide it and hope...',cls:'self',r:{noor:0,seeds:0},jump:0,back:3,catMsg:'Hiding truth is heavy on heart... 💛',res:'Truth came out anyway... -3 tiles'},
+  ]},
+};
+
+/* ═══════════════════════════════════════════════════
+   PLAYER POOL
+   4 slots. First N are human, rest are AI from pool.
+═══════════════════════════════════════════════════ */
+const AVATARS = ['👧','👦','👩','👨','🧒','🧑','👱','🧔'];
+
+// Fixed AI characters fill remaining slots
+const AI_POOL = [
+  {name:'Zara',  avatar:'🦊',color:'#FF8FA3',color2:'#D05070',
+   catMsgs:["Zara the Fox rolls! 🦊","Clever Zara moves ahead! 🌸","Zara takes her turn! 🦊"]},
+  {name:'Omar',  avatar:'🐢',color:'#4ECDC4',color2:'#2AB5AB',
+   catMsgs:["Slow & steady Omar! 🐢","Omar rolls carefully... 🌿","Patient Omar's turn! 🐢"]},
+  {name:'Lily',  avatar:'🐝',color:'#A78BFA',color2:'#7C5DD0',
+   catMsgs:["Busy Lily rolling! 🐝","Lily buzzes forward! 🌼","Sweet Lily's turn! 🐝"]},
+  {name:'Noor',  avatar:'🌟',color:'#7BC47A',color2:'#5AA35A',
+   catMsgs:["Bright Noor rolling! 🌟","Noor glows forward! ✨","Noor takes her turn! 🌸"]},
+];
+
+const PLAYER_COLORS = ['#F5C842','#FF8FA3','#4ECDC4','#A78BFA'];
+const PLAYER_COLORS2 = ['#E6A800','#D05070','#2AB5AB','#7C5DD0'];
+
+/* ═══════════════════════════════════════════════════
+   SETUP STATE
+═══════════════════════════════════════════════════ */
+let setup = {
+  humanCount: 1,
+  names: ['Player 1','Player 2','Player 3','Player 4'],
+  avatars: ['👧','👦','👩','👨'],
+};
+
+// Build setup stars
+(function(){
+  const bg=document.getElementById('setupStars');
+  for(let i=0;i<70;i++){
+    const s=document.createElement('div');
+    s.className='sstar';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*95}%;left:${Math.random()*100}%;--d:${2+Math.random()*3}s;--dl:${Math.random()*4}s`;
+    bg.appendChild(s);
+  }
+})();
+
+/* ── selectCount ── */
+function selectCount(n){
+  snd.select();
+  setup.humanCount=n;
+  document.querySelectorAll('.count-btn').forEach(b=>b.classList.toggle('sel',+b.dataset.n===n));
+  renderNameInputs();
+  renderPreview();
+}
+
+/* ── renderNameInputs ── */
+function renderNameInputs(){
+  const cont=document.getElementById('nameInputs');
+  cont.innerHTML='';
+  for(let i=0;i<setup.humanCount;i++){
+    const av=setup.avatars[i]||AVATARS[i];
+    const nm=setup.names[i]||`Player ${i+1}`;
+    const row=document.createElement('div');
+    row.className='name-row';
+    row.innerHTML=`
+      <span class="name-avatar" id="navatar${i}" onclick="cycleAvatar(${i})" style="cursor:pointer" title="Tap to change avatar">${av}</span>
+      <span class="name-label">P${i+1}:</span>
+      <input class="name-in" id="nin${i}" placeholder="Enter name..." value="${nm}" maxlength="12"
+        oninput="setup.names[${i}]=this.value||'Player ${i+1}';renderPreview()">`;
+    cont.appendChild(row);
+  }
+}
+
+function cycleAvatar(i){
+  snd.click();
+  const current=setup.avatars[i]||AVATARS[i];
+  const idx=AVATARS.indexOf(current);
+  setup.avatars[i]=AVATARS[(idx+1)%AVATARS.length];
+  document.getElementById(`navatar${i}`).textContent=setup.avatars[i];
+  renderPreview();
+}
+
+/* ── renderPreview ── */
+function renderPreview(){
+  const list=document.getElementById('previewList');
+  list.innerHTML='';
+
+  // Apply new rule: 1 human gets 1 AI partner, others get no AI
+  const hCount = setup.humanCount;
+  const slots = hCount === 1 ? 2 : hCount;
+
+  for(let i=0;i<slots;i++){
+    const color=PLAYER_COLORS[i];
+    let av,nm,type;
+    if(i<hCount){
+      av=setup.avatars[i]||AVATARS[i];
+      nm=setup.names[i]||`Player ${i+1}`;
+      type='👤 Human';
+    } else {
+      // Only one AI slot possible (when hCount===1)
+      av=AI_POOL[0].avatar; nm=AI_POOL[0].name+' (AI)'; type='🤖 Computer';
+    }
+    const div=document.createElement('div');
+    div.className='pv-item';
+    div.innerHTML=`<div class="pv-dot" style="background:${color}"></div>
+      <span style="font-size:1.1rem">${av}</span>
+      <span style="font-weight:800;font-size:.82rem;color:var(--ink)">${nm}</span>
+      <span class="pv-type">${type}</span>`;
+    list.appendChild(div);
+  }
+  // Info note
+  const note=document.createElement('div');
+  note.style.cssText='font-size:.7rem;color:var(--mid);font-weight:700;margin-top:6px;text-align:center;';
+  note.textContent = hCount===1
+    ? '1 Human vs 1 AI — classic duel! 🎯'
+    : `${hCount} Human players — no AI, pure friendly match! 🤝`;
+  list.appendChild(note);
+}
+
+/* ── startGame ── */
+function startGame(){
+  snd.click();
+
+  // ── NEW RULE ──
+  // 1 human  → 1 human + 1 AI  (2 players total)
+  // 2 humans → 2 humans only   (no AI)
+  // 3 humans → 3 humans only   (no AI)
+  // 4 humans → 4 humans only   (no AI)
+  const hCount = setup.humanCount;
+  const totalPlayers = hCount === 1 ? 2 : hCount;   // only 1-human gets an AI partner
+  const aiCount      = hCount === 1 ? 1 : 0;
+
+  const playerDefs=[];
+
+  // Add human players
+  for(let i=0;i<hCount;i++){
+    const av=setup.avatars[i]||AVATARS[i];
+    const nm=(document.getElementById(`nin${i}`)?.value||setup.names[i]||`Player ${i+1}`).trim()||`Player ${i+1}`;
+    playerDefs.push({
+      id:i, name:nm, isHuman:true,
+      avatar:av, color:PLAYER_COLORS[i], color2:PLAYER_COLORS2[i],
+      catMsgs:[
+        `${nm}'s turn! Roll with kindness! 💚`,
+        `Go ${nm}! Show your kind heart! 🌟`,
+        `${nm} — you've got this! 🎲`,
+      ]
+    });
+  }
+
+  // Add AI only when 1 human
+  if(aiCount > 0){
+    const ai = AI_POOL[0]; // Zara as the single opponent
+    playerDefs.push({
+      id:hCount, name:ai.name+' (AI)', isHuman:false,
+      avatar:ai.avatar,
+      color:PLAYER_COLORS[hCount], color2:PLAYER_COLORS2[hCount],
+      catMsgs:ai.catMsgs,
+    });
+  }
+
+  // Hide setup, show game
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='block';
+
+  // Update subtitle
+  const subText = hCount===1
+    ? `1 Human vs 1 AI · Roll · Choose Kindness · Reach the Light  `
+    : `${hCount} Human Players · No AI · Roll · Choose Kindness · Reach the Light  `;
+  document.getElementById('hdrSub').childNodes[0].textContent = subText;
+
+  initGame(playerDefs);
+}
+
+function backToSetup(){
+  snd.click();
+  document.getElementById('setupScreen').style.display='flex';
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('modalBg').style.display='none';
+}
+
+// Init setup UI
+selectCount(1);
+
+/* ═══════════════════════════════════════════════════
+   GAME STATE
+═══════════════════════════════════════════════════ */
+let G = {
+  players:[],
+  turnIndex:0,
+  busy:false,
+  waitingEvent:false,
+  finishOrder:[],
+  moveCount:{},
+  allDone:false,
+};
+
+function activePlayers(){ return G.players.filter(p=>!p.finished); }
+function currentPlayer(){
+  const ap=activePlayers();
+  if(!ap.length) return null;
+  return ap[G.turnIndex % ap.length];
+}
+function nextTurn(){
+  const ap=activePlayers();
+  if(!ap.length){ checkAllDone(); return; }
+  G.turnIndex=(G.turnIndex+1)%ap.length;
+  startTurn();
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT GAME  (called with playerDefs from setup)
+═══════════════════════════════════════════════════ */
+function initGame(playerDefs){
+  G.players=playerDefs.map(d=>({
+    ...d, pos:1, noor:0, seeds:0, badges:0,
+    kindness:0, finished:false, finishRank:0, finishMove:0,
+  }));
+  G.turnIndex=0; G.busy=false; G.waitingEvent=false;
+  G.finishOrder=[]; G.moveCount={}; G.allDone=false;
+  G.players.forEach(p=>{ G.moveCount[p.id]=0; });
+
+  buildBoard();
+  buildPlayerCards();
+  renderAllTokens();
+  updateRankings();
+  document.getElementById('logList').innerHTML='';
+  addLog('🌸 Journey begins! Good luck everyone!');
+  startTurn();
+}
+
+/* ═══════════════════════════════════════════════════
+   BOARD BUILD
+═══════════════════════════════════════════════════ */
+const COLS=9, ROWS=6;
+let tilePos={};
+
+function buildBoard(){
+  const board=document.getElementById('board');
+  board.innerHTML=''; tilePos={};
+  const cells=[];
+  for(let r=0;r<ROWS;r++){
+    cells[r]=[];
+    for(let c=0;c<COLS;c++){
+      const div=document.createElement('div');
+      div.className='tile'; cells[r][c]=div; board.appendChild(div);
+    }
+  }
+  let n=1;
+  for(let r=ROWS-1;r>=0;r--){
+    const rfb=ROWS-1-r;
+    if(rfb%2===0){ for(let c=0;c<COLS;c++){if(n<=50){tilePos[n]={row:r,col:c};n++;}} }
+    else          { for(let c=COLS-1;c>=0;c--){if(n<=50){tilePos[n]={row:r,col:c};n++;}} }
+  }
+  for(let i=1;i<=50;i++){
+    const {row,col}=tilePos[i]; const td=TILES[i-1]; const cell=cells[row][col];
+    cell.className=`tile t-${td.type}`; cell.id=`tile${i}`;
+    cell.innerHTML=`<span class="tile-num">${i}</span><span class="tile-emoji">${td.emoji}</span><span class="tile-label">${td.label}</span>`;
+    if(td.sp&&td.sp.jump) cell.innerHTML+=`<span class="jump-badge">+${td.sp.jump-i}</span>`;
+    if(td.sp&&td.sp.back) cell.innerHTML+=`<span class="back-badge">-${td.sp.back}</span>`;
+    const ts=document.createElement('div');
+    ts.className='token-stack'; ts.id=`tokens${i}`; cell.appendChild(ts);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER TOKENS
+═══════════════════════════════════════════════════ */
+function renderAllTokens(){
+  document.querySelectorAll('.token-stack').forEach(s=>s.innerHTML='');
+  G.players.forEach(p=>{
+    const stack=document.getElementById(`tokens${p.pos}`); if(!stack) return;
+    const t=document.createElement('span');
+    t.className='token'+(currentPlayer()&&currentPlayer().id===p.id?' active-tok':'');
+    t.textContent=p.avatar; t.title=p.name; stack.appendChild(t);
+  });
+  document.querySelectorAll('.tile.highlight').forEach(t=>t.classList.remove('highlight'));
+  const cp=currentPlayer();
+  if(cp){ const el=document.getElementById(`tile${cp.pos}`); if(el) el.classList.add('highlight'); }
+}
+
+/* ═══════════════════════════════════════════════════
+   PLAYER CARDS
+═══════════════════════════════════════════════════ */
+function buildPlayerCards(){
+  const row=document.getElementById('playersRow');
+  row.innerHTML='';
+  G.players.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='player-card'; card.id=`pcard${p.id}`;
+    card.style.setProperty('--color',p.color);
+    row.appendChild(card); updatePlayerCard(p);
+  });
+}
+function updatePlayerCard(p){
+  const card=document.getElementById(`pcard${p.id}`); if(!card) return;
+  const cp=currentPlayer(); const isActive=cp&&cp.id===p.id&&!p.finished;
+  card.className='player-card'+(isActive?' active':'')+(p.finished?' finished':'');
+  card.style.setProperty('--color',p.color);
+  let badge='';
+  if(p.finished) badge=`<span class="pc-badge badge-finished">✅ #${p.finishRank}</span>`;
+  else if(isActive) badge=`<span class="pc-badge badge-active" style="background:${p.color}">${p.isHuman?'🎲 YOUR TURN':'🤖 AI TURN'}</span>`;
+  else badge=`<span class="pc-badge badge-waiting">⏳</span>`;
+  const pct=Math.min(100,(p.noor/200)*100);
+  card.innerHTML=`${badge}
+    <div class="pc-top">
+      <span class="pc-avatar">${p.avatar}</span>
+      <div class="pc-info">
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-type">${p.isHuman?'👤 Human':'🤖 AI'}</div>
+        <div class="pc-pos">Tile ${p.pos}/50</div>
+      </div>
+    </div>
+    <div class="pc-noor">⭐${p.noor}
+      <div class="pc-bar"><div class="pc-fill" style="width:${pct}%;--color:${p.color}"></div></div>
+    </div>`;
+}
+function updateAllCards(){ G.players.forEach(p=>updatePlayerCard(p)); }
+
+/* ═══════════════════════════════════════════════════
+   RANKINGS
+═══════════════════════════════════════════════════ */
+function updateRankings(){
+  const list=document.getElementById('rankList');
+  const sorted=[...G.players].sort((a,b)=>{
+    if(a.finished&&!b.finished) return -1;
+    if(!a.finished&&b.finished) return 1;
+    if(a.finished&&b.finished) return a.finishRank-b.finishRank;
+    return b.pos-a.pos||b.noor-a.noor;
+  });
+  const medals=['🥇','🥈','🥉','🎖️'];
+  const cp=currentPlayer();
+  list.innerHTML=sorted.map((p,i)=>{
+    const isActive=cp&&cp.id===p.id;
+    return `<div class="rank-item${p.finished?' r-finished':isActive?' r-active':''}">
+      <span class="rank-medal">${medals[i]||'·'}</span>
+      <span>${p.avatar}</span>
+      <span class="rank-name">${p.name.split(' ')[0]}</span>
+      <span class="rank-score">⭐${p.noor}</span>
+      ${p.finished?'<span style="font-size:.62rem;color:#5AA35A">✅</span>':'<span style="font-size:.6rem;color:#aaa">T${p.pos}</span>'}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════
+   TURN SYSTEM
+═══════════════════════════════════════════════════ */
+function startTurn(){
+  if(G.allDone) return;
+  const ap=activePlayers();
+  if(!ap.length){ checkAllDone(); return; }
+  G.turnIndex=G.turnIndex%ap.length;
+  const p=ap[G.turnIndex];
+  G.busy=false; G.waitingEvent=false;
+  updateTurnIndicator(p);
+  updateAllCards(); renderAllTokens(); updateRankings();
+
+  if(p.isHuman){
+    enableRoll();
+    catSay(p.catMsgs[Math.floor(Math.random()*p.catMsgs.length)]);
+    document.getElementById('diceResult').textContent=`${p.avatar} ${p.name} — roll!`;
+  } else {
+    disableRoll();
+    catSay(p.catMsgs[Math.floor(Math.random()*p.catMsgs.length)]);
+    document.getElementById('diceResult').textContent=`${p.avatar} ${p.name} is thinking...`;
+    setTimeout(()=>aiRoll(p), 900+Math.random()*900);
+  }
+}
+
+function updateTurnIndicator(p){
+  document.getElementById('turnAvatar').textContent=p.avatar;
+  document.getElementById('turnName').textContent=(p.isHuman?'YOUR TURN — ':'AI TURN — ')+p.name;
+  const ind=document.getElementById('turnIndicator');
+  ind.style.setProperty('--active-color',p.color);
+  ind.style.setProperty('--active-color2',p.color2);
+}
+function enableRoll(){ document.getElementById('rollBtn').disabled=false; document.getElementById('diceEmoji').style.cursor='pointer'; }
+function disableRoll(){ document.getElementById('rollBtn').disabled=true; document.getElementById('diceEmoji').style.cursor='default'; }
+
+function humanRoll(){
+  const cp=currentPlayer();
+  if(!cp||!cp.isHuman||G.busy||G.waitingEvent) return;
+  snd.click(); executeRoll(cp);
+}
+function aiRoll(p){ if(p.finished){nextTurn();return;} executeRoll(p); }
+
+function executeRoll(p){
+  if(G.busy) return;
+  G.busy=true; disableRoll(); snd.dice();
+  const diceEl=document.getElementById('diceEmoji');
+  const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+  diceEl.classList.add('rolling');
+  let flashes=0;
+  const iv=setInterval(()=>{
+    diceEl.textContent=faces[Math.floor(Math.random()*6)]; flashes++;
+    if(flashes>7){
+      clearInterval(iv); diceEl.classList.remove('rolling');
+      const roll=Math.floor(Math.random()*6)+1;
+      diceEl.textContent=faces[roll-1];
+      document.getElementById('diceResult').textContent=`${p.avatar} rolled ${roll}!`;
+      addLog(`${p.avatar} ${p.name.split(' ')[0]} rolled ${roll}`);
+      setTimeout(()=>doMove(p,roll),350);
+    }
+  },70);
+}
+
+/* ═══════════════════════════════════════════════════
+   MOVEMENT
+═══════════════════════════════════════════════════ */
+async function doMove(p,steps){
+  G.moveCount[p.id]=(G.moveCount[p.id]||0)+1;
+  const target=Math.min(p.pos+steps,50);
+  for(let i=p.pos+1;i<=target;i++){
+    await wait(160); p.pos=i; renderAllTokens(); snd.move();
+  }
+  p.pos=target; renderAllTokens(); updateAllCards(); updateRankings();
+  if(p.pos>=50){ await wait(300); playerFinished(p); return; }
+  await wait(280);
+  const td=TILES[p.pos-1];
+  if(td.sp){
+    if(td.sp.event){
+      snd.event(); G.waitingEvent=true; await wait(200); showEvent(td.sp.event,p); return;
+    }
+    if(td.sp.jump){
+      snd.good(); sparkle(); sparkle();
+      const dest=td.sp.jump;
+      catSay(`${p.avatar} jumps to tile ${dest}! ⬆️✨`);
+      addLog(`${p.avatar} jumped to tile ${dest}!`,'good');
+      toast(`${p.avatar} ${p.name.split(' ')[0]} jumps ahead! ⬆️`);
+      await wait(600);
+      for(let j=p.pos+1;j<=dest;j++){ await wait(120); p.pos=j; renderAllTokens(); snd.move(); }
+      p.noor+=5; updateAllCards(); updateRankings();
+      if(p.pos>=50){ playerFinished(p); return; }
+      finishMove(p);
+    } else if(td.sp.back){
+      snd.back();
+      const bs=td.sp.back; const dest=Math.max(1,p.pos-bs);
+      catSay(`${p.avatar} steps back ${bs}... every step teaches! 💛`);
+      addLog(`${p.avatar} went back ${bs} tiles`,'back');
+      toast(`${p.avatar} ${p.name.split(' ')[0]}: gentle setback -${bs}`);
+      await wait(600);
+      for(let j=p.pos-1;j>=dest;j--){ await wait(140); p.pos=j; renderAllTokens(); snd.move(); }
+      updateAllCards(); updateRankings(); finishMove(p);
+    }
+  } else {
+    const ng={garden:2,lantern:3,river:1,village:2,library:3}[td.type]||1;
+    p.noor+=ng; updateAllCards(); updateRankings();
+    if(ng>0) toast(`${p.avatar} +${ng} Noor ⭐`);
+    finishMove(p);
+  }
+}
+
+function finishMove(p){
+  G.busy=false;
+  if(p.isHuman) enableRoll();
+  nextTurn();
+}
+
+/* ═══════════════════════════════════════════════════
+   PLAYER FINISHED
+═══════════════════════════════════════════════════ */
+async function playerFinished(p){
+  p.finished=true;
+  p.finishRank=G.finishOrder.length+1;
+  p.finishMove=G.moveCount[p.id];
+  G.finishOrder.push(p.id);
+  snd.finish(); sparkle(); sparkle(); sparkle();
+  showFinishBanner(p);
+  addLog(`🌙 ${p.name} reached Garden of Light! Rank #${p.finishRank}`,'win');
+  updateAllCards(); updateRankings();
+  await wait(2200);
+  G.busy=false;
+  const remaining=activePlayers();
+  if(!remaining.length){ await wait(500); checkAllDone(); }
+  else {
+    const ap=activePlayers();
+    G.turnIndex=G.turnIndex%Math.max(1,ap.length);
+    startTurn();
+  }
+}
+function showFinishBanner(p){
+  const ban=document.createElement('div'); ban.className='finish-banner';
+  ban.innerHTML=`<span class="fb-icon">${p.avatar}</span>
+    <div class="fb-text">${p.name.split(' ')[0]} reached 🌙!</div>
+    <div class="fb-sub">Rank #${p.finishRank} · ${p.noor} Noor ⭐</div>`;
+  document.body.appendChild(ban);
+  setTimeout(()=>{ ban.style.transition='opacity .5s'; ban.style.opacity='0'; setTimeout(()=>ban.remove(),500); },2000);
+}
+
+/* ═══════════════════════════════════════════════════
+   ALL DONE
+═══════════════════════════════════════════════════ */
+function checkAllDone(){
+  if(G.allDone) return;
+  G.allDone=true; disableRoll(); setTimeout(showFinalRankings,600);
+}
+function showFinalRankings(){
+  snd.win();
+  for(let i=0;i<6;i++) setTimeout(()=>{ sparkle(); sparkle(); }, i*180);
+
+  const sorted = [...G.players].sort((a,b) => a.finishRank - b.finishRank);
+  const medals  = ['🥇','🥈','🥉','🎖️'];
+  const titles  = ['🌟 Light Champion!','💚 Kind Explorer!','🌱 Noor Seeker!','🌸 Noor Seedling!'];
+
+  // Grade messages per rank
+  const rankMsg = [
+    'First to reach the Garden! Amazing journey! 🌙',
+    'So close! Keep choosing kindness! 💛',
+    'Every step counts — great effort! 🌿',
+    'The journey itself is the reward! 🌸',
+  ];
+
+  // Kindness star rating helper (0-3 stars based on kindness score)
+  function kindnessStars(k){
+    if(k>=5) return '⭐⭐⭐ Kindness Master!';
+    if(k>=3) return '⭐⭐ Kind Heart!';
+    if(k>=1) return '⭐ Growing Kinder!';
+    return '💛 Keep practising kindness!';
+  }
+
+  // Build rich player cards
+  const cards = sorted.map((p, i) => {
+    const isWinner = i === 0;
+    const bg = isWinner
+      ? `background:linear-gradient(135deg,#FFF8D0,#FFE87A);border:2px solid ${p.color};`
+      : `background:#FAFAFA;border:2px solid rgba(0,0,0,.06);`;
+    return `
+    <div style="${bg}border-radius:16px;padding:12px 14px;margin-bottom:8px;">
+      <!-- Top row: rank medal + avatar + name + position -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:1.8rem;line-height:1">${medals[i]||'🎖️'}</span>
+        <span style="font-size:1.6rem;line-height:1">${p.avatar}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:900;font-size:.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${p.name} ${p.isHuman?'<span style="font-size:.65rem;background:#4ECDC4;color:white;padding:1px 6px;border-radius:10px;">👤 Human</span>':'<span style="font-size:.65rem;background:#DDD;color:#555;padding:1px 6px;border-radius:10px;">🤖 AI</span>'}
+          </div>
+          <div style="font-size:.72rem;font-weight:700;color:${p.color};margin-top:1px;">${titles[i]||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:1rem;font-weight:900;color:var(--gold2);">⭐ ${p.noor}</div>
+          <div style="font-size:.62rem;color:var(--mid);font-weight:700;">${p.finishMove} moves</div>
+        </div>
+      </div>
+      <!-- Rewards row -->
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
+        <div style="background:rgba(245,200,66,.18);border:1.5px solid rgba(245,200,66,.5);border-radius:20px;padding:3px 9px;font-size:.68rem;font-weight:800;color:var(--gold2);">⭐ ${p.noor} Noor</div>
+        <div style="background:rgba(123,196,122,.15);border:1.5px solid rgba(123,196,122,.5);border-radius:20px;padding:3px 9px;font-size:.68rem;font-weight:800;color:var(--sage2);">🌱 ${p.seeds} Seeds</div>
+        <div style="background:rgba(78,205,196,.12);border:1.5px solid rgba(78,205,196,.4);border-radius:20px;padding:3px 9px;font-size:.68rem;font-weight:800;color:var(--teal2);">🏆 ${p.badges} Badges</div>
+        <div style="background:rgba(167,139,250,.12);border:1.5px solid rgba(167,139,250,.4);border-radius:20px;padding:3px 9px;font-size:.68rem;font-weight:800;color:#7C5DD0;">💚 ${p.kindness} Kind Acts</div>
+      </div>
+      <!-- Kindness rating -->
+      <div style="font-size:.72rem;font-weight:700;color:var(--mid);">${kindnessStars(p.kindness)}</div>
+      <!-- Rank message for humans -->
+      ${p.isHuman ? `<div style="font-size:.72rem;font-weight:700;color:var(--mid);margin-top:3px;font-style:italic;">"${rankMsg[i]||''}"</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <span style="font-size:3rem;display:block;margin-bottom:4px;">🌙</span>
+    <div style="font-family:'Bubblegum Sans',cursive;font-size:1.5rem;color:var(--ink);margin-bottom:2px;">Journey Complete!</div>
+    <div style="font-size:.78rem;color:var(--mid);font-weight:700;margin-bottom:14px;">All players reached the Garden of Light! ✨</div>
+
+    ${cards}
+
+    <div style="background:linear-gradient(135deg,#E8FFE8,#F0FFF4);border-radius:14px;padding:10px 14px;margin-bottom:14px;border:2px solid rgba(90,163,90,.3);font-size:.78rem;font-weight:700;color:var(--sage2);text-align:center;">
+      💡 <strong>Remember:</strong> Points show your kindness journey!<br>More Kind Acts = More Noor = Brighter Garden! 🌸
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:7px;">
+      <button class="mchoice good" id="playAgainBtn" style="justify-content:center;font-size:.9rem;">🌸 Play Again!</button>
+      <button class="mchoice ok"   id="newSetupBtn"  style="justify-content:center;font-size:.9rem;">⚙️ Change Players</button>
+    </div>`;
+
+  document.getElementById('modalBg').style.display = 'flex';
+  document.getElementById('playAgainBtn').addEventListener('click', () => {
+    snd.click(); document.getElementById('modalBg').style.display='none'; startGame();
+  });
+  document.getElementById('newSetupBtn').addEventListener('click', () => {
+    snd.click(); document.getElementById('modalBg').style.display='none'; backToSetup();
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   EVENT MODAL
+═══════════════════════════════════════════════════ */
+function showEvent(key,p){
+  const ev=EVENTS[key]; if(!ev){ finishMove(p); return; }
+  const modal=document.getElementById('modal');
+  modal.innerHTML=`
+    <span class="modal-icon">${ev.icon}</span>
+    <div class="modal-title">${ev.title}</div>
+    <div class="modal-who" style="background:${p.color};color:white">${p.avatar} ${p.name}</div>
+    <div class="modal-txt">${ev.story}</div>
+    <div class="modal-choices">
+      ${ev.choices.map((c,i)=>`<button class="mchoice ${c.cls}" id="mc${i}">${c.lbl}</button>`).join('')}
+    </div>`;
+  document.getElementById('modalBg').style.display='flex'; snd.event();
+  if(!p.isHuman){
+    const aiChoice=Math.random()<0.7?ev.choices[0]:ev.choices[1];
+    setTimeout(()=>{ snd.click(); document.getElementById('modalBg').style.display='none'; handleEventChoice(aiChoice,p,ev); },1400);
+  } else {
+    ev.choices.forEach((c,i)=>{
+      document.getElementById(`mc${i}`).addEventListener('click',()=>{
+        snd.click(); document.getElementById('modalBg').style.display='none'; handleEventChoice(c,p,ev);
+      });
+    });
+  }
+}
+async function handleEventChoice(choice,p,ev){
+  const isGood=choice.cls==='good';
+  p.noor+=choice.r.noor; p.seeds+=choice.r.seeds;
+  if(isGood) p.kindness++;
+  if(choice.badge) p.badges++;
+  updateAllCards(); updateRankings();
+  if(isGood){ snd.good(); sparkle(); sparkle(); }
+  catSay(choice.catMsg);
+  addLog(`${p.avatar} ${choice.res}`,isGood?'good':choice.back?'back':'');
+  const chips=[];
+  if(choice.r.noor>0) chips.push(`⭐ +${choice.r.noor}`);
+  if(choice.r.seeds>0) chips.push(`🌱 +${choice.r.seeds}`);
+  if(choice.jump>0) chips.push(`⬆️ +${choice.jump} tiles`);
+  if(choice.back>0) chips.push(`⬇ -${choice.back} tiles`);
+  if(choice.badge) chips.push(`🏆 Badge!`);
+  const modal=document.getElementById('modal');
+  modal.innerHTML=`
+    <span class="modal-icon">${isGood?'🌟':'💛'}</span>
+    <div class="modal-title">${isGood?'MashAllah!':'It\'s okay!'}</div>
+    <div class="modal-who" style="background:${p.color};color:white">${p.avatar} ${p.name}</div>
+    <div class="modal-txt">${choice.res}</div>
+    <div class="reward-chips">${chips.map(c=>`<div class="rchip">${c}</div>`).join('')}</div>
+    <button class="mchoice ok" id="continueBtn" style="justify-content:center">✨ Continue</button>`;
+  document.getElementById('modalBg').style.display='flex';
+  if(!p.isHuman){
+    await wait(1400); document.getElementById('modalBg').style.display='none'; await applyEventMove(choice,p);
+  } else {
+    document.getElementById('continueBtn').addEventListener('click',async()=>{
+      snd.click(); document.getElementById('modalBg').style.display='none'; await applyEventMove(choice,p);
+    });
+  }
+}
+async function applyEventMove(choice,p){
+  if(choice.jump&&choice.jump>0){
+    const dest=Math.min(p.pos+choice.jump,50);
+    for(let j=p.pos+1;j<=dest;j++){ await wait(130); p.pos=j; renderAllTokens(); snd.move(); }
+    updateAllCards(); updateRankings();
+    if(p.pos>=50){ playerFinished(p); return; }
+  } else if(choice.back&&choice.back>0){
+    const dest=Math.max(1,p.pos-choice.back);
+    for(let j=p.pos-1;j>=dest;j--){ await wait(140); p.pos=j; renderAllTokens(); snd.move(); }
+    updateAllCards(); updateRankings();
+  }
+  G.waitingEvent=false; finishMove(p);
+}
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+function catSay(msg){ document.getElementById('catMsg').textContent=msg; }
+function addLog(msg,cls=''){
+  const li=document.createElement('li'); li.className=cls; li.textContent=msg;
+  const list=document.getElementById('logList');
+  list.insertBefore(li,list.firstChild);
+  if(list.children.length>25) list.lastChild.remove();
+}
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+function sparkle(){
+  const s=document.createElement('div'); s.className='sparkle';
+  s.textContent=['✨','🌟','💫','⭐','🌸'][Math.floor(Math.random()*5)];
+  s.style.cssText=`left:${15+Math.random()*70}%;top:${10+Math.random()*65}%`;
+  document.body.appendChild(s); setTimeout(()=>s.remove(),800);
+}
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>
