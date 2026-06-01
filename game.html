@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🌙 Gardens of Noor — Multiplayer Board Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/gardens-of-noor/sw.js');
+  }
+</script>
 <style>
 :root{
   --bg:#FFF6E8; --gold:#F5C842; --gold2:#E6A800; --gold-glow:rgba(245,200,66,.45);
